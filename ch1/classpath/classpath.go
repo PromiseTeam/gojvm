@@ -1,9 +1,7 @@
 package classpath
 
-import (
-	"os"
-	"path/filepath"
-)
+import "os"
+import "path/filepath"
 
 type Classpath struct {
 	bootClasspath Entry
@@ -14,16 +12,18 @@ type Classpath struct {
 func Parse(jreOption, cpOption string) *Classpath {
 	cp := &Classpath{}
 	cp.parseBootAndExtClasspath(jreOption)
-	cp.pareseUserClasspath(cpOption)
+	cp.parseUserClasspath(cpOption)
 	return cp
 }
 
-func (self *Classpath) parseBootAndExtClasspath(jreOption string)  {
+func (self *Classpath) parseBootAndExtClasspath(jreOption string) {
 	jreDir := getJreDir(jreOption)
 
+	// jre/lib/*
 	jreLibPath := filepath.Join(jreDir, "lib", "*")
 	self.bootClasspath = newWildcardEntry(jreLibPath)
 
+	// jre/lib/ext/*
 	jreExtPath := filepath.Join(jreDir, "lib", "ext", "*")
 	self.extClasspath = newWildcardEntry(jreExtPath)
 }
@@ -41,7 +41,7 @@ func getJreDir(jreOption string) string {
 	panic("Can not find jre folder!")
 }
 
-func exists(path string) bool{
+func exists(path string) bool {
 	if _, err := os.Stat(path); err != nil {
 		if os.IsNotExist(err) {
 			return false
@@ -50,26 +50,25 @@ func exists(path string) bool{
 	return true
 }
 
-func (self *Classpath) pareseUserClasspath(cpOption string) {
+func (self *Classpath) parseUserClasspath(cpOption string) {
 	if cpOption == "" {
 		cpOption = "."
 	}
 	self.userClasspath = newEntry(cpOption)
 }
 
-func (self *Classpath) ReadClass(className string)([]byte, Entry, error) {
-	className = className + "."
+// className: fully/qualified/ClassName
+func (self *Classpath) ReadClass(className string) ([]byte, Entry, error) {
+	className = className + ".class"
 	if data, entry, err := self.bootClasspath.readClass(className); err == nil {
 		return data, entry, err
 	}
 	if data, entry, err := self.extClasspath.readClass(className); err == nil {
 		return data, entry, err
 	}
-
 	return self.userClasspath.readClass(className)
 }
 
 func (self *Classpath) String() string {
 	return self.userClasspath.String()
 }
-

@@ -1,13 +1,13 @@
 package classpath
 
-import (
-	"os"
-	"strings"
-)
+import "os"
+import "strings"
 
+// :(linux/unix) or ;(windows)
 const pathListSeparator = string(os.PathListSeparator)
 
 type Entry interface {
+	// className: fully/qualified/ClassName.class
 	readClass(className string) ([]byte, Entry, error)
 	String() string
 }
@@ -26,5 +26,6 @@ func newEntry(path string) Entry {
 
 		return newZipEntry(path)
 	}
+
 	return newDirEntry(path)
 }
